@@ -1,24 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset='utf-8' name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<meta charset="utf-8" name="viewport" content="initial-scale=1.0, user-scalable=no" />
 	<title>GIF Directions</title>
 	
 	<style type="text/css">
 		html { height: 100% }
 		body { height: 100%; margin: 0; padding: 0 }
-		#map { height: 100% }
+		#map { height: 50% }
 	</style>
 	
 	<script type="text/javascript"
-		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDDvZuug7_v9APAkG6aYQhV3oc-SsCbbzU&sensor=false">
+		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDDvZuug7_v9APAkG6aYQhV3oc-SsCbbzU&sensor=false&libraries=geometry">
 	</script>
 	
 	<script type="text/javascript">
 		var origin = new google.maps.LatLng(43.0845747, -77.67458859999999);		// RIT
 		var destination = new google.maps.LatLng(43.0881488, -77.64411689999997);	// Bruegger's Bagel, Henrietta
+		var directionsService = new google.maps.DirectionsService();
 		
-		google.maps.event.addDomListener(window, 'load', initializeMap);
+		google.maps.event.addDomListener(window, "load", initializeMap);
 		
 		function initializeMap() {
 			var mapOptions = {
@@ -34,7 +35,7 @@
 		function run() {
 			/*
 			Get directions
-			interpolate coordinates needed between directions (based off of 'smoothness' desired)
+			interpolate coordinates needed between directions (based off of "smoothness" desired)
 			for each direction
 				calculate heading between directions
 				get street view of current direction
@@ -43,10 +44,67 @@
 			
 			pass all the street view images to GIF generator
 			*/
+			
+			calcRoute();
+		}
+		
+		function calcRoute() {
+			var start = origin;
+			var end = destination;
+			var request = {
+				origin: start,
+				destination: end,
+				travelMode: google.maps.TravelMode.DRIVING
+			};
+			
+			directionsService.route(request, function(response, status) {
+				if (status == google.maps.DirectionsStatus.OK) {
+					console.log(response);
+					addImagesFromPath(response.routes[0].overview_path);
+				}
+			});
+		}
+		
+		function addImagesFromPath(path) {
+			var streetViewUrl = "http://maps.googleapis.com/maps/api/streetview?size=400x400&sensor=false";
+			var images = [];
+			var imagesElement = document.querySelector("#images");
+			
+			// Get the street view images
+			for (var i = 0; i < path.length; i++) {
+				var point = path[i];
+				var nextPoint = (i + 1 < path.length) ? path[i + 1] : 0;
+				
+				var locationString = "&location=" + point.k + "," + point.A;
+				var headingString;
+				
+				var origin = new google.maps.LatLng(point.k, point.A);
+				var destination = nextPoint ? new google.maps.LatLng(nextPoint.k, nextPoint.A) : null;
+				
+				// Determine the heading between path points
+				var heading;
+				if (destination) {
+					console.log("origin: " + origin);
+					console.log("dest: " + destination);
+					heading = google.maps.geometry.spherical.computeHeading(origin, destination);
+					headingString = "&heading=" + heading;
+					console.log(headingString);
+				}
+				
+				var image = new Image();
+				image.src = streetViewUrl + locationString + headingString;
+				images.push(image);
+			}
+			
+			// Add the street view images to the page
+			images.forEach(function(image) {
+				imagesElement.appendChild(image);
+			});
 		}
 	</script>
 </head>
 <body>
-	<div id="map"/>
+	<div id="map"></div>
+	<div id="images"></div>
 </body>
 </html>
