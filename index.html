@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='utf-8' name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<title>GIF Directions</title>
+	
+	<style type="text/css">
+		html { height: 100% }
+		body { height: 100%; margin: 0; padding: 0 }
+		#map { height: 100% }
+	</style>
+	
+	<script type="text/javascript"
+		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDDvZuug7_v9APAkG6aYQhV3oc-SsCbbzU&sensor=false">
+	</script>
+	
+	<script type="text/javascript">
+		var origin = new google.maps.LatLng(43.0845747, -77.67458859999999);		// RIT
+		var destination = new google.maps.LatLng(43.0881488, -77.64411689999997);	// Bruegger's Bagel, Henrietta
+		
+		google.maps.event.addDomListener(window, 'load', initializeMap);
+		
+		function initializeMap() {
+			var mapOptions = {
+				center: origin,
+				zoom: 16
+			};
+		
+			var map = new google.maps.Map(document.getElementById("map"), mapOptions);
+			
+			run();
+		}
+		
+		function run() {
+			/*
+			Get directions
+			interpolate coordinates needed between directions (based off of 'smoothness' desired)
+			for each direction
+				calculate heading between directions
+				get street view of current direction
+				wait a period of time
+			end for
+			
+			pass all the street view images to GIF generator
+			*/
+		}
+	</script>
+</head>
+<body>
+	<div id="map"/>
+</body>
+</html>
