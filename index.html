@@ -13,8 +13,13 @@
 	<script type="text/javascript"
 		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDDvZuug7_v9APAkG6aYQhV3oc-SsCbbzU&sensor=false&libraries=geometry">
 	</script>
+    
+    <!-- Credit to https://github.com/jnordberg/gif.js -->
+    <script src="js/gif.js"></script>
 	
 	<script type="text/javascript">
+        'use strict';
+    
 		var origin = new google.maps.LatLng(43.0845747, -77.67458859999999);		// RIT
 		var destination = new google.maps.LatLng(43.0881488, -77.64411689999997);	// Bruegger's Bagel, Henrietta
 		var directionsService = new google.maps.DirectionsService();
@@ -69,6 +74,8 @@
 			var streetViewUrl = "http://maps.googleapis.com/maps/api/streetview?size=400x400&sensor=false";
 			var images = [];
 			var imagesElement = document.querySelector("#images");
+            var numImagesLoaded = 0;
+            var imagesToLoad = path.length;
 			
 			// Get the street view images
 			for (var i = 0; i < path.length; i++) {
@@ -76,7 +83,7 @@
 				var nextPoint = (i + 1 < path.length) ? path[i + 1] : 0;
 				
 				var locationString = "&location=" + point.k + "," + point.A;
-				var headingString;
+				var headingString = "";
 				
 				var origin = new google.maps.LatLng(point.k, point.A);
 				var destination = nextPoint ? new google.maps.LatLng(nextPoint.k, nextPoint.A) : null;
@@ -84,23 +91,49 @@
 				// Determine the heading between path points
 				var heading;
 				if (destination) {
-					console.log("origin: " + origin);
-					console.log("dest: " + destination);
 					heading = google.maps.geometry.spherical.computeHeading(origin, destination);
 					headingString = "&heading=" + heading;
-					console.log(headingString);
 				}
-				
+                
 				var image = new Image();
+                
+                // Count loaded images. Once done, create the GIF.
+                image.onload = function() {
+                    numImagesLoaded++;
+                    
+                    if (numImagesLoaded == imagesToLoad) {-
+                        createDirectionsGif();
+                    }
+                };
+                
+                //console.log(streetViewUrl + locationString + headingString);
+                image.crossOrigin = "Anonymous";
 				image.src = streetViewUrl + locationString + headingString;
 				images.push(image);
 			}
 			
-			// Add the street view images to the page
-			images.forEach(function(image) {
-				imagesElement.appendChild(image);
-			});
+            // Create the GIF after all images have been loaded
+            function createDirectionsGif() {
+                var gif = new GIF({
+                    workers: 1,
+                    quality: 10
+                });
+                
+                // Add the street view images to the page
+                images.forEach(function(image) {
+                    imagesElement.appendChild(image);
+                    //gif.addFrame(image, {delay: 500});
+                    gif.addFrame(image);
+                });
+                
+                gif.on("finished", function(blob) {
+                    window.open(URL.createObjectURL(blob));
+                });
+                
+                gif.render();
+            }
 		}
+        
 	</script>
 </head>
 <body>
