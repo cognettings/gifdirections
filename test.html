@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<script src='js/GifDirections.js'></script>
+<script>
+	'use strict';
+	
+	var options = {
+		origin : 'my origin',
+		destination : 'my destination'
+	};
+	
+	function callGen() {
+		gifDirections.genDirectionsGif(options, function (gif) {
+			if (gif != undefined) console.log(gif);
+			else console.log('gif gen failed');
+		});
+	}
+	
+	window.onload = function () {
+		callGen();
+	}
+</script>
