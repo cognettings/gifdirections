@@ -73,8 +73,7 @@
                         options.route = response.routes[0];
                     
                         gifDirections.genDirectionsGif(options, function (gif) {
-                            console.log('gif:');
-                            console.log(gif);
+                            window.open(gif);
                         });
                     }
                     else {
