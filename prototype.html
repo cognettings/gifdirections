@@ -4,7 +4,7 @@
 	<meta charset='utf-8'>
 	<title>Autopilot</title>
 	<link rel='stylesheet' type='text/css' href='css/index.css'></style>
-	
+	<script src='js/GifDirections.js'></script>
 	<script>
 		window.onload = function () {
 			app.init();
@@ -17,7 +17,7 @@
 			var _timePerFrameElement;
 			var _granularityElement;
 			var _imageSizeElement;
-			var _overlayElement;
+			var _overlayDirectionsElement;
 			var _getDirectionsButton;
 		    var _generateGifButton;
 			
@@ -36,31 +36,47 @@
 				console.log('getting directions');
 			}
 			
+            /**
+             * Use gifDirections module to create the directions GIF.
+             */
 			function _generateGif() {
-				console.log('generating gif');
 				var options = _getOptions();
-				console.log(options);
+				
+                gifDirections.genDirectionsGif(options, function (gif) {
+                    console.log('gif:');
+                    console.log(gif);
+                });
 			}
+                
 			
 			/**
 			 * Get user options from the page.
 			 */
 			function _getOptions() {
 				// BUG: .value isn't working
-				var options = {
-					origin : _originElement.value,
-					destination : _destinationElement.value
-				}
+				var options = {};
+                
+                options.origin = (_originElement.value == "") ? null : _originElement.value;
+                options.destination = (_destinationElement.value == "") ? null : _destinationElement.value;
+                options.granularity = (_granularityElement.value == "") ? null : _granularityElement.value;
+                options.imageSize = (_imageSizeElement.value == "") ? null : _imageSizeElement.value;
+                options.overlayDirections = _overlayDirectionsElement.checked;
+                options.timePerDirectionFrame = (_timePerFrameElement.value == "") ? null : _timePerFrameElement.value * 2;
+                options.timePerFrame = (_timePerFrameElement.value == "") ? null : _timePerFrameElement.value;
+                
+                return options;
 			}
 		
-		
+            /**
+             * Set up the app.
+             */
 			function init() {
 				_originElement = document.querySelector('#origin');
 				_destinationElement = document.querySelector('#destination');
 				_timePerFrameElement = document.querySelector('#timePerFrame');
 				_granularityElement = document.querySelector('#granularity');
 				_imageSizeElement = document.querySelector('#imageSize');
-				_overlayElement = document.querySelector('#overlay');
+				_overlayDirectionsElement = document.querySelector('#overlayDirections');
 				_getDirectionsButton = document.querySelector('#getDirections');
 				_generateGifButton = document.querySelector('#generateGif');
 				
@@ -68,8 +84,7 @@
 			}
 			
 			return {
-				init : init,
-				printElements : function () { console.log(_originElement); }
+				init : init
 			};
 		})();
 	</script>
@@ -97,28 +112,26 @@
 			<br>
 			
 			Granularity:
-			<input id='granularity' list='granularities'>
-			<datalist id='granularities'>
-				<option value='low'>
-				<option value='medium'>
-				<option value='high'>
-			</datalist>
+			<select id='granularity'>
+				<option value='low'>low</option>
+				<option value='medium'>medium</option>
+				<option value='high'>high</option>
+            </select>
 			<br>
 			
 			Image size:
-			<input id='imageSize' list='imageSizes'>
-			<datalist id='imageSizes'>
-				<option value='small'>
-				<option value='medium'>
-				<option value='large'>
-			</datalist>
+			<select id='imageSize'>
+				<option value='small'>small</option>
+				<option value='medium'>medium</option>
+				<option value='large'>large</option>
+			</select>
 			<br>
 			
 			Overlay directions
-			<input id='overlay' type='checkbox'>
+			<input id='overlayDirections' type='checkbox'>
 			<br>
 			
-			<input id='generateGif' type='button' value='Generate gif'>
+			<input id='generateGif' type='button' value='Generate GIF'>
 		</section>
 	</section> <!-- End user input -->
 </body>
