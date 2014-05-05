@@ -4,14 +4,16 @@
 	<meta charset='utf-8'>
 	<title>Autopilot</title>
 	<link rel='stylesheet' type='text/css' href='css/index.css'></style>
+    
+    <script src='https://maps.googleapis.com/maps/api/js?key=AIzaSyDDvZuug7_v9APAkG6aYQhV3oc-SsCbbzU&sensor=false&libraries=geometry'></script>
+    <script src="js/gif.js"></script> <!-- Credit to https://github.com/jnordberg/gif.js -->
 	<script src='js/GifDirections.js'></script>
 	<script>
-		window.onload = function () {
-			app.init();
-		};
+        'use strict';
 		
 		var app = (function () {
 			// Properties
+            // Page elements
 			var _originElement;
 			var _destinationElement;
 			var _timePerFrameElement;
@@ -20,7 +22,10 @@
 			var _overlayDirectionsElement;
 			var _getDirectionsButton;
 		    var _generateGifButton;
-			
+			// Google API
+            var directionsDisplay = new google.maps.DirectionsRenderer();
+            var directionsService = new google.maps.DirectionsService();
+            
 			/**
 			 * Add event listeners to the page.
 			 */
@@ -31,20 +36,51 @@
 			
 			/**
 			 * Request directions from Google Maps API.
+             * Source: https://developers.google.com/maps/documentation/javascript/examples/directions-simple
 			 */
 			function _getDirections() {
-				console.log('getting directions');
+                var options = _getOptions();
+                var request = {
+                    origin : options.origin,
+                    destination : options.destination,
+                    travelMode : google.maps.TravelMode.DRIVING
+                };
+                
+                directionsService.route(request, function(response, status) {
+                    if (status == google.maps.DirectionsStatus.OK) {
+                        directionsDisplay.setDirections(response);
+                    }
+                    else {
+                        alert('No routes were found.');
+                        console.log(status);
+                    }
+                });
 			}
 			
             /**
              * Use gifDirections module to create the directions GIF.
              */
 			function _generateGif() {
-				var options = _getOptions();
-				
-                gifDirections.genDirectionsGif(options, function (gif) {
-                    console.log('gif:');
-                    console.log(gif);
+                var options = _getOptions();
+                var request = {
+                    origin : options.origin,
+                    destination : options.destination,
+                    travelMode : google.maps.TravelMode.DRIVING
+                };
+                
+                directionsService.route(request, function(response, status) {
+                    if (status == google.maps.DirectionsStatus.OK) {
+                        options.route = response.routes[0];
+                    
+                        gifDirections.genDirectionsGif(options, function (gif) {
+                            console.log('gif:');
+                            console.log(gif);
+                        });
+                    }
+                    else {
+                        alert('No routes were found.');
+                        console.log(status);
+                    }
                 });
 			}
                 
@@ -53,16 +89,15 @@
 			 * Get user options from the page.
 			 */
 			function _getOptions() {
-				// BUG: .value isn't working
 				var options = {};
                 
-                options.origin = (_originElement.value == "") ? null : _originElement.value;
-                options.destination = (_destinationElement.value == "") ? null : _destinationElement.value;
-                options.granularity = (_granularityElement.value == "") ? null : _granularityElement.value;
-                options.imageSize = (_imageSizeElement.value == "") ? null : _imageSizeElement.value;
+                options.origin = (_originElement.value == '') ? null : _originElement.value;
+                options.destination = (_destinationElement.value == '') ? null : _destinationElement.value;
+                options.granularity = (_granularityElement.value == '') ? null : _granularityElement.value;
+                options.imageSize = (_imageSizeElement.value == '') ? null : _imageSizeElement.value;
                 options.overlayDirections = _overlayDirectionsElement.checked;
-                options.timePerDirectionFrame = (_timePerFrameElement.value == "") ? null : _timePerFrameElement.value * 2;
-                options.timePerFrame = (_timePerFrameElement.value == "") ? null : _timePerFrameElement.value;
+                options.timePerDirectionFrame = (_timePerFrameElement.value == '') ? null : _timePerFrameElement.value * 2;
+                options.timePerFrame = (_timePerFrameElement.value == '') ? null : _timePerFrameElement.value;
                 
                 return options;
 			}
@@ -81,12 +116,30 @@
 				_generateGifButton = document.querySelector('#generateGif');
 				
 				_addEventListeners();
+                
+                _initializeMap();
 			}
+
+            /**
+             * Set up the map and center it on RIT.
+             */
+            function _initializeMap() {
+                var mapOptions = {
+                    center: new google.maps.LatLng(43.0845747, -77.67458859999999),
+                    zoom: 15
+                };
+            
+                var map = new google.maps.Map(document.getElementById('map'), mapOptions);
+                directionsDisplay.setMap(map);
+            }
 			
+            // Return app's public interface.
 			return {
 				init : init
 			};
 		})();
+        
+		google.maps.event.addDomListener(window, 'load', app.init);
 	</script>
 </head>
 <body>
