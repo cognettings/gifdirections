@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='utf-8'>
+	<title>Autopilot</title>
+	<link rel='stylesheet' type='text/css' href='css/index.css'></style>
+	
+	<script>
+		window.onload = function () {
+			app.init();
+		};
+		
+		var app = (function () {
+			// Properties
+			var _originElement;
+			var _destinationElement;
+			var _timePerFrameElement;
+			var _granularityElement;
+			var _imageSizeElement;
+			var _overlayElement;
+			var _getDirectionsButton;
+		    var _generateGifButton;
+			
+			/**
+			 * Add event listeners to the page.
+			 */
+			function _addEventListeners() {
+				_getDirectionsButton.onclick = _getDirections;
+				_generateGifButton.onclick = _generateGif;
+			}
+			
+			/**
+			 * Request directions from Google Maps API.
+			 */
+			function _getDirections() {
+				console.log('getting directions');
+			}
+			
+			function _generateGif() {
+				console.log('generating gif');
+				var options = _getOptions();
+				console.log(options);
+			}
+			
+			/**
+			 * Get user options from the page.
+			 */
+			function _getOptions() {
+				// BUG: .value isn't working
+				var options = {
+					origin : _originElement.value,
+					destination : _destinationElement.value
+				}
+			}
+		
+		
+			function init() {
+				_originElement = document.querySelector('#origin');
+				_destinationElement = document.querySelector('#destination');
+				_timePerFrameElement = document.querySelector('#timePerFrame');
+				_granularityElement = document.querySelector('#granularity');
+				_imageSizeElement = document.querySelector('#imageSize');
+				_overlayElement = document.querySelector('#overlay');
+				_getDirectionsButton = document.querySelector('#getDirections');
+				_generateGifButton = document.querySelector('#generateGif');
+				
+				_addEventListeners();
+			}
+			
+			return {
+				init : init,
+				printElements : function () { console.log(_originElement); }
+			};
+		})();
+	</script>
+</head>
+<body>
+	<h1>Autopilot</h1>
+	<div id='map'></div>
+	<section id='input'>
+		<section id='directionsInput'>
+			<h3>Directions</h3>
+			Start:
+			<input id='origin' type='text'>
+			<br>
+			End:
+			<input id='destination' type='text'>
+			<br>
+			<input id='getDirections' type='button' value='Get directions'>
+		</section>
+		
+		<section id='generationInput'>
+			<h3>Generation</h3>
+			
+			Time per frame (ms):
+			<input id='timePerFrame' type='text'>
+			<br>
+			
+			Granularity:
+			<input id='granularity' list='granularities'>
+			<datalist id='granularities'>
+				<option value='low'>
+				<option value='medium'>
+				<option value='high'>
+			</datalist>
+			<br>
+			
+			Image size:
+			<input id='imageSize' list='imageSizes'>
+			<datalist id='imageSizes'>
+				<option value='small'>
+				<option value='medium'>
+				<option value='large'>
+			</datalist>
+			<br>
+			
+			Overlay directions
+			<input id='overlay' type='checkbox'>
+			<br>
+			
+			<input id='generateGif' type='button' value='Generate gif'>
+		</section>
+	</section> <!-- End user input -->
+</body>
+</html>

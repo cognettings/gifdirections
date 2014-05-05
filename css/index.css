@@ -1,0 +1,11 @@
+#input {
+	position: relative;
+}
+
+#directionsInput {
+	position: inherit;
+}
+
+#generationInput {
+	position: inherit;
+}
