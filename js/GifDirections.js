@@ -28,11 +28,11 @@ var gifDirections = (function () {
 				return false;
 			}
 			
-			options.granularity = options.granularity | GRANULARITY.MEDIUM;
-			options.imageSize = options.imageSize | IMAGE_SIZE.MEDIUM;
-			options.overlayDirections = options.overlayDirections | OVERLAY_DIRECTIONS;
-			options.timePerDirectionFrame = options.timePerDirectionFrame | TIME_PER_DIRECTION_FRAME;
-			options.timePerFrame = options.timePerFrame | TIME_PER_FRAME;
+			options.granularity = (options.granularity) ? options.granularity : GRANULARITY.MEDIUM;
+			options.imageSize = (options.imageSize) ? options.imageSize : IMAGE_SIZE.MEDIUM;
+			options.overlayDirections = (options.overlayDirections) ? options.overlayDirections : OVERLAY_DIRECTIONS;
+			options.timePerDirectionFrame = (options.timePerDirectionFrame) ? options.timePerDirectionFrame : TIME_PER_DIRECTION_FRAME;
+			options.timePerFrame = (options.timePerFrame) ? options.timePerFrame : TIME_PER_FRAME;
 		
 			return true;
 		} else {
@@ -46,7 +46,7 @@ var gifDirections = (function () {
 	function genDirectionsGif(options, callback) {
 		if (_checkOptions(options)) {
 			// Continue with Gif generation.
-			previousGifs.push(previousGifs.length);
+			previousGifs.push(options);
 			
 			callback(getLastGif());
 			return true;
