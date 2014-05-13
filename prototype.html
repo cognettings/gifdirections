@@ -33,10 +33,41 @@
 			 * Add event listeners to the page.
 			 */
 			function _addEventListeners() {
-				_getDirectionsButton.onclick = _getDirections;
+				// Element events
+                _getDirectionsButton.onclick = _getDirections;
 				_generateGifButton.onclick = _generateGif;
+                _routesElement.onchange = _changeSelectedRoute;
+                
+                // Window events
+                window.onbeforeunload = app.exit;
 			}
 			
+			/**
+			 * Add a route option to the page.
+			 */
+			function _addRoute(route) {
+				var routeOption = document.createElement('option');
+				routeOption.value = JSON.stringify(route);
+				routeOption.innerHTML = route.origin + ' - ' + route.destination;
+				
+				_routesElement.appendChild(routeOption);
+			}
+			
+            /**
+             * Called when a different route is selected from the previous routes list.
+             */
+            function _changeSelectedRoute(event) {
+                var route = event.target.selectedOptions[0].value;
+                route = JSON.parse(route);
+            }
+            
+            /**
+             * Performed when the window is unloaded.
+             */
+            function exit() {
+                _save();
+            }
+            
 			/**
 			 * Request directions from Google Maps API.
              * Source: https://developers.google.com/maps/documentation/javascript/examples/directions-simple
@@ -133,6 +164,14 @@
                 
                 _initializeMap();
 			}
+            
+            /**
+             * Create app data.
+             */
+            function _initAppData() {
+                _appData = {};
+                _appData.routes = [];
+            }
 
             /**
              * Set up the map and center it on RIT.
@@ -161,29 +200,30 @@
 					_appData.routes.forEach(function (route) {
 						_addRoute(route);
 					});
-				}
+				} else {
+                    // Create app data.
+                    _initAppData();
+                }
 			}
 			
+            /**
+             * Resets the state of the application.
+             */
+            function reset() {
+                _initAppData();
+            }
+            
 			/**
-			 * Add a route option to the page.
-			 */
-			function _addRoute(route) {
-				var routeOption = document.createElement('option');
-				routeOption.value = JSON.stringify(route);
-				routeOption.innerHTML = route.origin + ' - ' + route.destination;
-				
-				_routesElement.appendChild(routeOption);
-			}
-			
-			/**
-			 * Check if a route was added to the localStorage.
+			 * Check if a route was already added.
 			 */
 			function _routeExists(route) {
-				_appData.routes.forEach(function (r) {
-					if (_routesEqual(route, r)) {
-						return true;
+				for (var i = 0; i < _appData.routes.length; i++) {
+                    var r = _appData.routes[i];
+					
+                    if (_routesEqual(route, r)) {
+                        return true;
 					}
-				});
+				};
 				
 				return false;
 			}
@@ -197,36 +237,39 @@
 				routeTitle1 = routeTitle1.toLowerCase();
 				routeTitle2 = routeTitle2.toLowerCase();
 				
+                var toReturn = routeTitle1 == routeTitle2;
 				return routeTitle1 == routeTitle2;
 			}
 			
+            /**
+             * Save app data to local storage.
+             */
+            function _save() {
+                localStorage['appData'] = JSON.stringify(_appData);
+            }
+            
+            /**
+             * Add a route to the app data.
+             */
 			function _saveRoute(options) {
-				var appData = localStorage['appData'];
-				
 				// Make sure something is going to be saved
 				if (options) {
-					// If appData exists then add the route to it
-					if (appData) {
-						_appData = JSON.parse(appData);
-						_appData.routes.push(options);
-					} else {
-					// Else create appData
-						_appData = {};
-						_appData.routes = [];
-						_appData.routes.push(options);
-					}
+                    _appData.routes.push(options);
 					
+                    // Add a new element to the page
 					_addRoute(options);
-					localStorage['appData'] = JSON.stringify(_appData);
 				}
 			}
 			
             // Return app's public interface.
 			return {
-				init : init
+				init : init,
+                exit : exit,
+                reset : reset
 			};
 		})();
         
+        // Add window events
 		google.maps.event.addDomListener(window, 'load', app.init);
 	</script>
 </head>
@@ -275,6 +318,7 @@
 			<input id='generateGif' type='button' value='Generate GIF'>
 			<br>
 			
+            Previous routes:
 			<select id='routes'>
 				<!-- Previous routes get added here -->
 			</select>
