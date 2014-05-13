@@ -21,70 +21,105 @@ var gifDirections = (function () {
     var _options = {};
 
     function _addImagesFromPath(path, callback) {
-			var streetViewUrl = 'http://maps.googleapis.com/maps/api/streetview?sensor=false&size='
-            streetViewUrl += _options.imageSize.width + 'x' + _options.imageSize.height;
-			var images = [];
-            var numImagesLoaded = 0;
-            var imagesToLoad = path.length;
+		var streetViewUrl = 'http://maps.googleapis.com/maps/api/streetview?sensor=false&size='
+		streetViewUrl += _options.imageSize.width + 'x' + _options.imageSize.height;
+		var images = [];
+		var loadedImages = [];
+		var numImagesLoaded = 0;
+		var imagesToLoad = path.length;
+		var imageSources = [];
+		
+		// Get the street view images
+		for (var i = 0; i < path.length; i++) {
+			var point = path[i];
+			var nextPoint = (i + 1 < path.length) ? path[i + 1] : 0;
 			
-			// Get the street view images
-			for (var i = 0; i < path.length; i++) {
-				var point = path[i];
-				var nextPoint = (i + 1 < path.length) ? path[i + 1] : 0;
-				
-				var locationString = '&location=' + point.k + ',' + point.A;
-				var headingString = '';
-				
-				var origin = new google.maps.LatLng(point.k, point.A);
-				var destination = nextPoint ? new google.maps.LatLng(nextPoint.k, nextPoint.A) : null;
-				
-				// Determine the heading between path points
-				var heading;
-				if (destination) {
-					heading = google.maps.geometry.spherical.computeHeading(origin, destination);
-					headingString = '&heading=' + heading;
-				}
-                
-				var image = new Image();
-                
-                // Count loaded images. Once done, create the GIF.
-                image.onload = function() {
-                    numImagesLoaded++;
-                    
-                    if (numImagesLoaded == imagesToLoad) {
-                        createDirectionsGif();
-                    }
-                };
-                
-                //console.log(streetViewUrl + locationString + headingString);
-                image.crossOrigin = 'Anonymous';
-				image.src = streetViewUrl + locationString + headingString;
-				images.push(image);
+			var locationString = '&location=' + point.k + ',' + point.A;
+			var headingString = '';
+			
+			var origin = new google.maps.LatLng(point.k, point.A);
+			var destination = nextPoint ? new google.maps.LatLng(nextPoint.k, nextPoint.A) : null;
+			
+			// Determine the heading between path points
+			var heading;
+			if (destination) {
+				heading = google.maps.geometry.spherical.computeHeading(origin, destination);
+				headingString = '&heading=' + heading;
 			}
 			
-            // Create the GIF after all images have been loaded
-            function createDirectionsGif() {
-                var gif = new GIF({
-                    workers: 2,
-                    quality: 10
-                });
-                
-                // Add the street view images to the page
-                images.forEach(function(image) {
-                    //imagesElement.appendChild(image);
-                    //gif.addFrame(image, {delay: 500});
-                    gif.addFrame(image, {delay: _options.timePerFrame});
-                });
-                
-                gif.on('finished', function(blob) {
-                    var renderedGif = URL.createObjectURL(blob);
-                    _previousGifs.push(renderedGif);
-                    callback(renderedGif);
-                });
-                
-                gif.render();
-            }
+			var image = new Image();
+			image.crossOrigin = 'Anonymous';
+			images.push(image);
+			
+			//image.src = streetViewUrl + locationString + headingString;
+			imageSources.push(streetViewUrl + locationString + headingString);
 		}
+		
+		getImages(imageSources);
+		
+		// Create the GIF after all images have been loaded
+		function createDirectionsGif() {
+			var gif = new GIF({
+				workers: 2,
+				quality: 10
+			});
+			
+			// Add the street view images to the page
+			console.log(_options.timePerFrame);
+			images.forEach(function(image) {
+				gif.addFrame(image, {delay: _options.timePerFrame});
+			});
+			
+			gif.on('finished', function(blob) {
+				var renderedGif = URL.createObjectURL(blob);
+				_previousGifs.push(renderedGif);
+				callback(renderedGif);
+			});
+			
+			gif.render();
+		}
+		
+		function getImages(sourceList) {
+			console.log('loading a batch of images from the sourceList: ' + sourceList);
+			
+			var BATCH_SIZE = (sourceList.length > 10) ? 10 : sourceList.length;
+			var image;
+			var imageSource;
+			
+			// Load a set amount of images
+			for (var i = 1; i <= BATCH_SIZE; i++) {
+				image = images.shift();
+				imageSource = sourceList.shift();
+				
+				// If last image in batch
+				if (i + 1 > BATCH_SIZE) {
+					image.onload = function () {
+						numImagesLoaded++;
+						
+						// If last image then create the GIF
+						if (numImagesLoaded == imagesToLoad) {
+							console.log('creating the GIF');
+							images = loadedImages;
+							createDirectionsGif();
+						} else {						
+							// After last image has been loaded wait a second before loading next batch
+							setTimeout(function () {
+								getImages(sourceList);
+							}, 5000);
+						}
+					};
+				} else {                
+					// Count loaded images. Once done, create the GIF.
+					image.onload = function() {
+						numImagesLoaded++;
+					};
+				}
+				
+				image.src = imageSource;
+				loadedImages.push(image);
+			}
+		}
+	}
     
 	/**
 	 * Check the options and choose defaults if necessary.

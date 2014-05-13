@@ -20,8 +20,11 @@
 			var _granularityElement;
 			var _imageSizeElement;
 			var _overlayDirectionsElement;
+			var _routesElement;
 			var _getDirectionsButton;
 		    var _generateGifButton;
+			// Application data
+			var _appData;
 			// Google API
             var directionsDisplay = new google.maps.DirectionsRenderer();
             var directionsService = new google.maps.DirectionsService();
@@ -72,9 +75,16 @@
                     if (status == google.maps.DirectionsStatus.OK) {
                         options.route = response.routes[0];
                     
-                        gifDirections.genDirectionsGif(options, function (gif) {
+						// Save previous routes
+						// BUG: _routeExists returning false when should be true
+						if (!_routeExists(options)) {
+							_saveRoute(options);
+						}
+						
+                        /*gifDirections.genDirectionsGif(options, function (gif) {
                             window.open(gif);
-                        });
+                        });*/
+						console.log(options.route);
                     }
                     else {
                         alert('No routes were found.');
@@ -105,6 +115,7 @@
              * Set up the app.
              */
 			function init() {
+				// Grab page elements
 				_originElement = document.querySelector('#origin');
 				_destinationElement = document.querySelector('#destination');
 				_timePerFrameElement = document.querySelector('#timePerFrame');
@@ -113,6 +124,10 @@
 				_overlayDirectionsElement = document.querySelector('#overlayDirections');
 				_getDirectionsButton = document.querySelector('#getDirections');
 				_generateGifButton = document.querySelector('#generateGif');
+				_routesElement = document.querySelector('#routes');
+				
+				// Load previous application state
+				_load();
 				
 				_addEventListeners();
                 
@@ -131,6 +146,80 @@
                 var map = new google.maps.Map(document.getElementById('map'), mapOptions);
                 directionsDisplay.setMap(map);
             }
+			
+			/**
+			 * Load previously used routes to the page.
+			 */
+			function _load() {
+				var appData = localStorage['appData'];
+				
+				// Check for previous appData
+				if (appData) {
+					_appData = JSON.parse(appData);
+					
+					// Add each of the previous routes to the page
+					_appData.routes.forEach(function (route) {
+						_addRoute(route);
+					});
+				}
+			}
+			
+			/**
+			 * Add a route option to the page.
+			 */
+			function _addRoute(route) {
+				var routeOption = document.createElement('option');
+				routeOption.value = JSON.stringify(route);
+				routeOption.innerHTML = route.origin + ' - ' + route.destination;
+				
+				_routesElement.appendChild(routeOption);
+			}
+			
+			/**
+			 * Check if a route was added to the localStorage.
+			 */
+			function _routeExists(route) {
+				_appData.routes.forEach(function (r) {
+					if (_routesEqual(route, r)) {
+						return true;
+					}
+				});
+				
+				return false;
+			}
+			
+			/**
+			 * Compare two routes.
+			 */
+			function _routesEqual(r1, r2) {
+				var routeTitle1 = r1.origin + ' - ' + r1.destination;
+				var routeTitle2 = r2.origin + ' - ' + r2.destination;
+				routeTitle1 = routeTitle1.toLowerCase();
+				routeTitle2 = routeTitle2.toLowerCase();
+				
+				return routeTitle1 == routeTitle2;
+			}
+			
+			function _saveRoute(options) {
+				var appData = localStorage['appData'];
+				
+				// Make sure something is going to be saved
+				if (options) {
+					// If appData exists then add the route to it
+					if (appData) {
+						_appData = JSON.parse(appData);
+						_appData.routes.push(options);
+					} else {
+					// Else create appData
+						_appData = {};
+						_appData.routes = [];
+						_appData.routes.push(options);
+					}
+					
+					_addRoute(options);
+					localStorage['appData'] = JSON.stringify(_appData);
+				}
+			}
 			
             // Return app's public interface.
 			return {
@@ -184,6 +273,11 @@
 			<br>
 			
 			<input id='generateGif' type='button' value='Generate GIF'>
+			<br>
+			
+			<select id='routes'>
+				<!-- Previous routes get added here -->
+			</select>
 		</section>
 	</section> <!-- End user input -->
 </body>
