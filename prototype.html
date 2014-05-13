@@ -45,7 +45,7 @@
 			/**
 			 * Add a route option to the page.
 			 */
-			function _addRoute(route) {
+			function _addRouteOption(route) {
 				var routeOption = document.createElement('option');
 				routeOption.value = JSON.stringify(route);
 				routeOption.innerHTML = route.origin + ' - ' + route.destination;
@@ -59,6 +59,8 @@
             function _changeSelectedRoute(event) {
                 var route = event.target.selectedOptions[0].value;
                 route = JSON.parse(route);
+                
+                _setOptions(route);
             }
             
             /**
@@ -107,10 +109,11 @@
                         options.route = response.routes[0];
                     
 						// Save previous routes
-						// BUG: _routeExists returning false when should be true
 						if (!_routeExists(options)) {
 							_saveRoute(options);
-						}
+						} else {
+                            _replaceRoute(options);
+                        }
 						
                         /*gifDirections.genDirectionsGif(options, function (gif) {
                             window.open(gif);
@@ -123,7 +126,6 @@
                     }
                 });
 			}
-                
 			
 			/**
 			 * Get user options from the page.
@@ -141,6 +143,18 @@
                 
                 return options;
 			}
+            
+            /**
+             * Set page options.
+             */
+            function _setOptions(options) {
+                _originElement.value = options.origin;
+                _destinationElement.value = options.destination;
+                _granularityElement.value = options.granularity;
+                _imageSizeElement.value = options.imageSize;
+                _overlayDirectionsElement.checked = options.overlayDirections;
+                _timePerFrameElement.value = options.timePerFrame;
+            }
 		
             /**
              * Set up the app.
@@ -198,14 +212,38 @@
 					
 					// Add each of the previous routes to the page
 					_appData.routes.forEach(function (route) {
-						_addRoute(route);
+						_addRouteOption(route);
 					});
+                    
+                    _setOptions(_appData.routes[0]);
 				} else {
                     // Create app data.
                     _initAppData();
                 }
 			}
 			
+            /**
+             * Updates the app data for an existing route.
+             */
+            function _replaceRoute(options) {
+                if (options) {
+                    for (var i = 0; i < _appData.routes.length; i++) {
+                        var r = _appData.routes[i];
+                        
+                        // If route is found then overwrite its options.
+                        if (_routesEqual(options, r)) {
+                            // Update the data
+                            _appData.routes[i] = options;
+                            
+                            // Update the page
+                            _routesElement.querySelectorAll('option')[0].value = JSON.stringify(options);
+                            
+                            return;
+                        }
+                    }
+                }
+            }
+            
             /**
              * Resets the state of the application.
              */
@@ -216,14 +254,14 @@
 			/**
 			 * Check if a route was already added.
 			 */
-			function _routeExists(route) {
+			function _routeExists(options) {
 				for (var i = 0; i < _appData.routes.length; i++) {
                     var r = _appData.routes[i];
 					
-                    if (_routesEqual(route, r)) {
+                    if (_routesEqual(options, r)) {
                         return true;
 					}
-				};
+				}
 				
 				return false;
 			}
@@ -257,7 +295,7 @@
                     _appData.routes.push(options);
 					
                     // Add a new element to the page
-					_addRoute(options);
+					_addRouteOption(options);
 				}
 			}
 			
