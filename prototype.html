@@ -20,6 +20,7 @@
 			var _granularityElement;
 			var _imageSizeElement;
 			var _overlayDirectionsElement;
+            var _progressElement;
 			var _routesElement;
 			var _getDirectionsButton;
 		    var _generateGifButton;
@@ -37,6 +38,9 @@
                 _getDirectionsButton.onclick = _getDirections;
 				_generateGifButton.onclick = _generateGif;
                 _routesElement.onchange = _changeSelectedRoute;
+                window.addEventListener('progress', function (e) {
+                    _progressElement.innerHTML = e.detail + '%';
+                });
                 
                 // Window events
                 window.onbeforeunload = app.exit;
@@ -115,10 +119,9 @@
                             _replaceRoute(options);
                         }
 						
-                        /*gifDirections.genDirectionsGif(options, function (gif) {
+                        gifDirections.genDirectionsGif(options, function (gif) {
                             window.open(gif);
-                        });*/
-						console.log(options.route);
+                        });
                     }
                     else {
                         alert('No routes were found.');
@@ -143,18 +146,6 @@
                 
                 return options;
 			}
-            
-            /**
-             * Set page options.
-             */
-            function _setOptions(options) {
-                _originElement.value = options.origin;
-                _destinationElement.value = options.destination;
-                _granularityElement.value = options.granularity;
-                _imageSizeElement.value = options.imageSize;
-                _overlayDirectionsElement.checked = options.overlayDirections;
-                _timePerFrameElement.value = options.timePerFrame;
-            }
 		
             /**
              * Set up the app.
@@ -170,6 +161,7 @@
 				_getDirectionsButton = document.querySelector('#getDirections');
 				_generateGifButton = document.querySelector('#generateGif');
 				_routesElement = document.querySelector('#routes');
+                _progressElement = document.querySelector('#progress');
 				
 				// Load previous application state
 				_load();
@@ -215,7 +207,10 @@
 						_addRouteOption(route);
 					});
                     
-                    _setOptions(_appData.routes[0]);
+					// Set page options to the first, previous route
+					if (_appData.routes.length > 0) {
+						_setOptions(_appData.routes[0]);
+					}
 				} else {
                     // Create app data.
                     _initAppData();
@@ -298,6 +293,18 @@
 					_addRouteOption(options);
 				}
 			}
+            
+            /**
+             * Set page options.
+             */
+            function _setOptions(options) {
+                _originElement.value = options.origin;
+                _destinationElement.value = options.destination;
+                _granularityElement.value = options.granularity;
+                _imageSizeElement.value = options.imageSize;
+                _overlayDirectionsElement.checked = options.overlayDirections;
+                _timePerFrameElement.value = options.timePerFrame;
+            }
 			
             // Return app's public interface.
 			return {
@@ -354,6 +361,7 @@
 			<br>
 			
 			<input id='generateGif' type='button' value='Generate GIF'>
+            <span id='progress'>0%</span>
 			<br>
 			
             Previous routes:
