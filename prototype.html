@@ -7,6 +7,7 @@
     
     <script src='https://maps.googleapis.com/maps/api/js?key=AIzaSyDDvZuug7_v9APAkG6aYQhV3oc-SsCbbzU&sensor=false&libraries=geometry'></script>
     <script src="js/gif.js"></script> <!-- Credit to https://github.com/jnordberg/gif.js -->
+	<script src='js/MultilineText.js'></script>
 	<script src='js/GifDirections.js'></script>
 	<script>
         'use strict';
@@ -66,6 +67,19 @@
                 
                 _setOptions(route);
             }
+			
+			/**
+			 * Copy options.
+			 */
+			function _copy(options) {
+				var optionsCopy = {};
+				
+				for (var attr in  options) {
+					optionsCopy[attr] = options[attr];
+				}
+				
+				return optionsCopy;
+			}
             
             /**
              * Performed when the window is unloaded.
@@ -119,8 +133,10 @@
                             _replaceRoute(options);
                         }
 						
-                        gifDirections.genDirectionsGif(options, function (gif) {
-                            window.open(gif);
+						// Generate gif
+                        gifDirections.genDirectionsGif(_copy(options), function (gif) {
+							document.querySelector('#result').src = gif;
+							window.dispatchEvent(new CustomEvent('progress', {'detail' : 100}));
                         });
                     }
                     else {
@@ -369,6 +385,8 @@
 				<!-- Previous routes get added here -->
 			</select>
 		</section>
+			
+		<img id='result'></img>
 	</section> <!-- End user input -->
 </body>
 </html>
