@@ -21,15 +21,12 @@ var gifDirections = (function () {
     var _options = {};
 
     function _addImagesFromPath(path, callback) {
-		var streetViewUrl = 'http://maps.googleapis.com/maps/api/streetview?sensor=false&size='
+		var streetViewUrl = 'http://maps.googleapis.com/maps/api/streetview?key=AIzaSyDDvZuug7_v9APAkG6aYQhV3oc-SsCbbzU&sensor=false&size='
 		streetViewUrl += _options.imageSize.width + 'x' + _options.imageSize.height;
 		var images = [];
-		var loadedImages = [];
-		var numImagesLoaded = 0;
-		var imagesToLoad = path.length;
 		var imageSources = [];
 		
-		// Get the street view images
+		// Get the street view image URLs
 		for (var i = 0; i < path.length; i++) {
 			var point = path[i];
 			var nextPoint = (i + 1 < path.length) ? path[i + 1] : 0;
@@ -57,6 +54,53 @@ var gifDirections = (function () {
 		
 		getImages(imageSources);
 		
+		/**
+		 * Get images from the Google Street View API.
+		 */
+		function getImages(sourceList) {
+			var numImagesLoaded = 0;
+			var imagesToLoad = sourceList.length;
+			var loadedImages = [];
+			var inc = 1;
+			
+			// Determine number of images to load based on the granularity chosen.
+			switch (_options.granularity) {
+				case GRANULARITY.LOW:
+					inc = 2;
+					break;
+				case GRANULARITY.MEDIUM:
+					inc = 5;
+					break;
+				case GRANULARITY.HIGH:
+					inc = 8;
+					break;
+			}
+			
+			imagesToLoad = Math.floor(sourceList.length / inc);
+			
+			// Load the images.
+			for (var i = 0; i < sourceList.length; i += inc) {
+				loadedImages.push(images[i]);
+				
+				images[i].onload = function () {
+					numImagesLoaded++;
+					
+					// Update image loading progress
+					var progress = numImagesLoaded / imagesToLoad * 100;
+					progress = (progress > 100) ? 100 : progress;
+					//window.dispatchEvent(new CustomEvent('progress', {'detail' : numImagesLoaded / imagesToLoad * 100}));
+					
+					// If all the images have been loaded, then generate the gif.
+					if (numImagesLoaded == imagesToLoad) {
+						images = loadedImages;
+						createDirectionsGif();
+					}
+				}
+				
+				images[i].src = sourceList[i];
+			}
+		}
+		
 		// Create the GIF after all images have been loaded
 		function createDirectionsGif() {
 			var gif = new GIF({
@@ -65,7 +109,6 @@ var gifDirections = (function () {
 			});
 			
 			// Add the street view images to the page
-			console.log(_options.timePerFrame);
 			images.forEach(function(image) {
 				gif.addFrame(image, {delay: _options.timePerFrame});
 			});
@@ -77,47 +120,6 @@ var gifDirections = (function () {
 			});
 			
 			gif.render();
-		}
-		
-		function getImages(sourceList) {
-			console.log('loading a batch of images from the sourceList: ' + sourceList);
-			
-			var BATCH_SIZE = (sourceList.length > 10) ? 10 : sourceList.length;
-			var image;
-			var imageSource;
-			
-			// Load a set amount of images
-			for (var i = 1; i <= BATCH_SIZE; i++) {
-				image = images.shift();
-				imageSource = sourceList.shift();
-				
-				// If last image in batch
-				if (i + 1 > BATCH_SIZE) {
-					image.onload = function () {
-						numImagesLoaded++;
-						
-						// If last image then create the GIF
-						if (numImagesLoaded == imagesToLoad) {
-							console.log('creating the GIF');
-							images = loadedImages;
-							createDirectionsGif();
-						} else {						
-							// After last image has been loaded wait a second before loading next batch
-							setTimeout(function () {
-								getImages(sourceList);
-							}, 5000);
-						}
-					};
-				} else {                
-					// Count loaded images. Once done, create the GIF.
-					image.onload = function() {
-						numImagesLoaded++;
-					};
-				}
-				
-				image.src = imageSource;
-				loadedImages.push(image);
-			}
 		}
 	}
     
@@ -162,7 +164,15 @@ var gifDirections = (function () {
 		if (_checkOptions(options)) {
 			// Continue with Gif generation.
             _options = options;
-			_addImagesFromPath(options.route.overview_path, callback);
+			// _addImagesFromPath(options.route.overview_path, callback);
+			var steps = options.route.legs[0].steps;
+			var path = [];
+			steps.forEach(function (e) {
+				path = path.concat(e.path);
+			});
+			
+			_addImagesFromPath(path, callback);
+			
 			return true;
 		} else {
 			callback();
