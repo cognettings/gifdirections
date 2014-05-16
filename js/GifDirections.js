@@ -20,7 +20,7 @@ var gifDirections = (function () {
 	var _previousGifs = [];
     var _options = {};
 
-    function _addImagesFromPath(path, callback) {
+    function _addImagesFromPath(path, directions, callback) {
 		var streetViewUrl = 'http://maps.googleapis.com/maps/api/streetview?key=AIzaSyDDvZuug7_v9APAkG6aYQhV3oc-SsCbbzU&sensor=false&size='
 		streetViewUrl += _options.imageSize.width + 'x' + _options.imageSize.height;
 		var images = [];
@@ -61,6 +61,7 @@ var gifDirections = (function () {
 			var numImagesLoaded = 0;
 			var imagesToLoad = sourceList.length;
 			var loadedImages = [];
+			var directionsToUse = [];
 			var inc = 1;
 			
 			// Determine number of images to load based on the granularity chosen.
@@ -81,6 +82,7 @@ var gifDirections = (function () {
 			// Load the images.
 			for (var i = 0; i < sourceList.length; i += inc) {
 				loadedImages.push(images[i]);
+				directionsToUse.push(directions[i]);
 				
 				images[i].onload = function () {
 					numImagesLoaded++;
@@ -99,27 +101,64 @@ var gifDirections = (function () {
 				
 				images[i].src = sourceList[i];
 			}
+			
+			directions = directionsToUse;
 		}
 		
 		// Create the GIF after all images have been loaded
 		function createDirectionsGif() {
+			var canvas = document.createElement('canvas');
+			var ctx = canvas.getContext('2d');
+			var i = 0;
+			var loadedImages = 0;
+			var imagesToLoad = images.length;
 			var gif = new GIF({
-				workers: 2,
-				quality: 10
+				workers: 4,
+				quality: 30
 			});
+			
+			// Set up the canvas context
+			canvas.width = _options.imageSize.width;
+			canvas.height = _options.imageSize.height;
+			ctx.font = '20px Georgia';
 			
 			// Add the street view images to the page
 			images.forEach(function(image) {
-				gif.addFrame(image, {delay: _options.timePerFrame});
+				if (_options.overlayDirections) {
+					// Overlay directions on each frame
+					ctx.drawImage(image, 0, 0);
+					var text = new MultilineText(0, 0, canvas.width);
+					text.setText(directions[i]);
+					text.draw(ctx);
+					//ctx.fillText(directions[i], 0, 20);
+					image.onload = function () {
+						gif.addFrame(image, {delay: _options.timePerFrame});
+						loadedImages++;
+						
+						// Render gif when all the frames have been added.
+						if (loadedImages == imagesToLoad) {
+							gif.render();
+						}
+					};
+					image.src = canvas.toDataURL();
+					//gif.addFrame(canvas, {delay: _options.timePerFrame});
+				} else {
+					gif.addFrame(image, {delay: _options.timePerFrame});
+				}
+				
+				i++;
 			});
 			
+			// What to do when gif has been created.
 			gif.on('finished', function(blob) {
 				var renderedGif = URL.createObjectURL(blob);
 				_previousGifs.push(renderedGif);
 				callback(renderedGif);
 			});
 			
-			gif.render();
+			if (_options.overlayDirections == false) {
+				gif.render();
+			}
 		}
 	}
     
@@ -164,14 +203,27 @@ var gifDirections = (function () {
 		if (_checkOptions(options)) {
 			// Continue with Gif generation.
             _options = options;
-			// _addImagesFromPath(options.route.overview_path, callback);
+			
+			// Get the latitudes and longitudes
+			var regEx = new RegExp('</?\\w>', 'ig');
 			var steps = options.route.legs[0].steps;
 			var path = [];
-			steps.forEach(function (e) {
-				path = path.concat(e.path);
+			var directions = [];
+			steps.forEach(function (s) {
+				path = path.concat(s.path);
+				
+				if (options.overlayDirections) {
+					// Get the instructions for each frame.
+					s.path.forEach(function (p) {
+						// Remove HTML formatting from instruction.
+						var instruction = s.instructions;
+						instruction = instruction.replace(regEx, '');
+						directions.push(instruction);
+					});
+				}
 			});
 			
-			_addImagesFromPath(path, callback);
+			_addImagesFromPath(path, directions, callback);
 			
 			return true;
 		} else {
