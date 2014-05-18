@@ -40,7 +40,7 @@
 				_generateGifButton.onclick = _generateGif;
                 _routesElement.onchange = _changeSelectedRoute;
                 window.addEventListener('progress', function (e) {
-                    _progressElement.innerHTML = e.detail + '%';
+					_progressElement.innerHTML = e.detail;
                 });
                 
                 // Window events
@@ -122,6 +122,9 @@
                     travelMode : google.maps.TravelMode.DRIVING
                 };
                 
+				// Reset progress bar
+				_progressElement.innerHTML = '0%';
+				
                 directionsService.route(request, function(response, status) {
                     if (status == google.maps.DirectionsStatus.OK) {
                         options.route = response.routes[0];
@@ -135,8 +138,9 @@
 						
 						// Generate gif
                         gifDirections.genDirectionsGif(_copy(options), function (gif) {
-							document.querySelector('#result').src = gif;
-							window.dispatchEvent(new CustomEvent('progress', {'detail' : 100}));
+							//document.querySelector('#result').src = gif;
+							window.open(gif);
+							window.dispatchEvent(new CustomEvent('progress', {'detail' : 'Finished! Make sure pop-ups aren\'t being blocked.'}));
                         });
                     }
                     else {
@@ -247,7 +251,7 @@
                             _appData.routes[i] = options;
                             
                             // Update the page
-                            _routesElement.querySelectorAll('option')[0].value = JSON.stringify(options);
+                            _routesElement.querySelectorAll('option')[i].value = JSON.stringify(options);
                             
                             return;
                         }
@@ -359,7 +363,7 @@
 			<h3>Generation</h3>
 			
 			Time per frame (ms):
-			<input id='timePerFrame' type='text'>
+			<input id='timePerFrame' type='text' value='1000'>
 			<br>
 			
 			Granularity:
