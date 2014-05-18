@@ -88,13 +88,12 @@ var gifDirections = (function () {
 					numImagesLoaded++;
 					
 					// Update image loading progress
-					var progress = numImagesLoaded / imagesToLoad * 100;
-					progress = (progress > 100) ? 100 : progress;
-					//window.dispatchEvent(new CustomEvent('progress', {'detail' : numImagesLoaded / imagesToLoad * 100}));
+					window.dispatchEvent(new CustomEvent('progress', {'detail' : 'Downloading images: ' + numImagesLoaded / imagesToLoad * 100 + '%'}));
 					
 					// If all the images have been loaded, then generate the gif.
 					if (numImagesLoaded == imagesToLoad) {
 						images = loadedImages;
+						window.dispatchEvent(new CustomEvent('progress', {'detail' : 'Processing images...'}));
 						createDirectionsGif();
 					}
 				}
@@ -107,7 +106,7 @@ var gifDirections = (function () {
 		
 		// Create the GIF after all images have been loaded
 		function createDirectionsGif() {
-			var canvas = document.createElement('canvas');
+			var canvas = document.createElement('canvas');	// Used to add directions to each frame
 			var ctx = canvas.getContext('2d');
 			var i = 0;
 			var loadedImages = 0;
@@ -122,17 +121,21 @@ var gifDirections = (function () {
 			canvas.height = _options.imageSize.height;
 			ctx.font = '20px Georgia';
 			
-			// Add the street view images to the page
-			images.forEach(function(image) {
+			// Add each frame to the gif to be rendered
+			images.forEach(function (image) {
 				if (_options.overlayDirections) {
 					// Overlay directions on each frame
 					ctx.drawImage(image, 0, 0);
 					var text = new MultilineText(0, 0, canvas.width);
 					text.setText(directions[i]);
 					text.draw(ctx);
-					//ctx.fillText(directions[i], 0, 20);
+					
+					// Clear image
+					image.src = '';
+					
+					// After the directions have been added to the frame add it to the gif
 					image.onload = function () {
-						gif.addFrame(image, {delay: _options.timePerFrame});
+						gif.addFrame(image, {delay: parseInt(_options.timePerFrame)});
 						loadedImages++;
 						
 						// Render gif when all the frames have been added.
@@ -140,8 +143,9 @@ var gifDirections = (function () {
 							gif.render();
 						}
 					};
+					
+					image.crossOrigin = 'Anonymous';
 					image.src = canvas.toDataURL();
-					//gif.addFrame(canvas, {delay: _options.timePerFrame});
 				} else {
 					gif.addFrame(image, {delay: _options.timePerFrame});
 				}
@@ -164,6 +168,7 @@ var gifDirections = (function () {
     
 	/**
 	 * Check the options and choose defaults if necessary.
+	 * @return true if options are good, or false if options are bad
 	 */
 	function _checkOptions(options) {
 		if (options) {
@@ -205,10 +210,10 @@ var gifDirections = (function () {
             _options = options;
 			
 			// Get the latitudes and longitudes
-			var regEx = new RegExp('</?\\w>', 'ig');
-			var steps = options.route.legs[0].steps;
-			var path = [];
-			var directions = [];
+			var regEx = new RegExp('</?\\w>', 'ig');	// Used to remove html from Google directions
+			var steps = options.route.legs[0].steps;	// The steps in the route
+			var path = [];								// Lat and Long	coords for the route
+			var directions = [];						// Driving directions for each step along the route	
 			steps.forEach(function (s) {
 				path = path.concat(s.path);
 				
@@ -223,6 +228,7 @@ var gifDirections = (function () {
 				}
 			});
 			
+			// Begin creating the gif
 			_addImagesFromPath(path, directions, callback);
 			
 			return true;
