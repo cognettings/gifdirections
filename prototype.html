@@ -3,12 +3,12 @@
 <head>
 	<meta charset='utf-8'>
 	<title>Autopilot</title>
-	<link rel='stylesheet' type='text/css' href='css/index.css'></style>
+	<link rel='stylesheet' type='text/css' href='css/index.css'>
     
-    <script src='https://maps.googleapis.com/maps/api/js?key=AIzaSyDDvZuug7_v9APAkG6aYQhV3oc-SsCbbzU&sensor=false&libraries=geometry'></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDDvZuug7_v9APAkG6aYQhV3oc-SsCbbzU&sensor=false&libraries=geometry"></script>
     <script src="js/gif.js"></script> <!-- Credit to https://github.com/jnordberg/gif.js -->
-	<script src='js/MultilineText.js'></script>
-	<script src='js/GifDirections.js'></script>
+	<script src="js/MultilineText.js"></script>
+	<script src="js/GifDirections.js"></script>
 	<script>
         'use strict';
 		
@@ -333,23 +333,29 @@
         // Add window events
 		google.maps.event.addDomListener(window, 'load', app.init);
 	</script>
+	
 </head>
+
+
+
 <body>
-	<h1>Autopilot</h1>
+	<h1><img src="car.gif">Autopilot</h1>
 	<div id='map'></div>
-	<section id='input'>
-		<section id='directionsInput'>
+	<section id='mapInput'>
+		<div id='directionsInput'>
 			<h3>Directions</h3>
 			Start:
-			<input id='origin' type='text' value='lomb memorial drive, rochester, ny'>
+			<input id='origin' type='text' value='lomb memorial drive, rochester, ny' width='50'>
 			<br>
 			End:
-			<input id='destination' type='text' value='barnes and noble, park point, rochester, ny'>
+			<input id='destination' type='text' value='barnes and noble, park point, rochester, ny' width='100'>
 			<br>
-			<input id='getDirections' type='button' value='Get directions'>
-		</section>
+			<div class="wrapper">
+				<input id='getDirections' type='button' value='Get directions'>
+			</div>
+		</div>
 		
-		<section id='generationInput'>
+		<div id='generationInput'>
 			<h3>Generation</h3>
 			
 			Time per frame (ms):
@@ -375,8 +381,8 @@
 			Overlay directions
 			<input id='overlayDirections' type='checkbox'>
 			<br>
-			
 			<input id='generateGif' type='button' value='Generate GIF'>
+			
             <span id='progress'>0%</span>
 			<br>
 			
@@ -384,7 +390,7 @@
 			<select id='routes'>
 				<!-- Previous routes get added here -->
 			</select>
-		</section>
+		</div>
 			
 		<img id='result'></img>
 	</section> <!-- End user input -->
