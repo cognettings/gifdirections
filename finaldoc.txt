@@ -1,0 +1,19 @@
+List of Features
+	Get directions to a place.
+	Save a GIF of the directions from the starting point to the place.
+	Direction overlays on the exported GIF.
+	Simple suite of controls to change the GIF output.
+
+High-Level Architecture
+	Modules:
+		app - Handles user input and interaction with the gifDirections module.
+		gifDirections - Generates a gif based on the options it was fed.
+
+Design Decisions
+	// CSS stuff?
+
+Technical Decisions
+	Decided to use gif.js instead of creating our own gif library. This saved a lot of time and allowed us to focus on other things.
+
+Give Credit Where Credit is Due
+	Gif Generation: http://jnordberg.github.io/gif.js/
